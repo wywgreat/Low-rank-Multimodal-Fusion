@@ -115,11 +115,12 @@ class LMF(nn.Module):
         self.audio_subnet = SubNet(self.audio_in, self.audio_hidden, self.audio_prob)
         self.video_subnet = SubNet(self.video_in, self.video_hidden, self.video_prob)
         self.text_subnet = TextSubNet(self.text_in, self.text_hidden, self.text_out, dropout=self.text_prob)
+        ## wyw audio video 是基于一般的神经网络，而文本是基于LSTM, 问题：原始图像、语音数据是多帧的平均么？？还是如何获得的
 
         # define the post_fusion layers
         self.post_fusion_dropout = nn.Dropout(p=self.post_fusion_prob)
         # self.post_fusion_layer_1 = nn.Linear((self.text_out + 1) * (self.video_hidden + 1) * (self.audio_hidden + 1), self.post_fusion_dim)
-        self.audio_factor = Parameter(torch.Tensor(self.rank, self.audio_hidden + 1, self.output_dim))
+        self.audio_factor = Parameter(torch.Tensor(self.rank, self.audio_hidden + 1, self.output_dim)) ## wyw 这貌似涉及到LMF的算法和求解
         self.video_factor = Parameter(torch.Tensor(self.rank, self.video_hidden + 1, self.output_dim))
         self.text_factor = Parameter(torch.Tensor(self.rank, self.text_out + 1, self.output_dim))
         self.fusion_weights = Parameter(torch.Tensor(1, self.rank))
@@ -157,13 +158,17 @@ class LMF(nn.Module):
         _text_h = torch.cat((Variable(torch.ones(batch_size, 1).type(DTYPE), requires_grad=False), text_h), dim=1)
 
         fusion_audio = torch.matmul(_audio_h, self.audio_factor)
+        a = self.audio_factor ## wyw
         fusion_video = torch.matmul(_video_h, self.video_factor)
+        b = self.video_factor ## wyw
         fusion_text = torch.matmul(_text_h, self.text_factor)
+        c = self.text_factor  ## wyw
         fusion_zy = fusion_audio * fusion_video * fusion_text
 
         # output = torch.sum(fusion_zy, dim=0).squeeze()
         # use linear transformation instead of simple summation, more flexibility
         output = torch.matmul(self.fusion_weights, fusion_zy.permute(1, 0, 2)).squeeze() + self.fusion_bias
+        d = output  ## wyw
         output = output.view(-1, self.output_dim)
         if self.use_softmax:
             output = F.softmax(output)

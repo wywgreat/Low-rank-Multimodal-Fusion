@@ -61,7 +61,7 @@ def main(options):
     params['batch_size'] = [4, 8, 16, 32, 64, 128]
     params['weight_decay'] = [0, 0.001, 0.002, 0.01]
 
-    total_settings = total(params)
+    total_settings = total(params)  ## wyw 8957952
 
     print("There are {} different hyper-parameter settings in total.".format(total_settings))
 
@@ -72,6 +72,7 @@ def main(options):
         writer.writerow(["audio_hidden", "video_hidden", 'text_hidden', 'audio_dropout', 'video_dropout', 'text_dropout',
                         'factor_learning_rate', 'learning_rate', 'rank', 'batch_size', 'weight_decay',
                         'Best Validation MAE', 'Test MAE', 'Test Corr', 'Test multiclass accuracy', 'Test binary accuracy', 'Test f1_score'])
+        ## wyw 用Excel记录grid search的过程，这种方式很666
 
 
     for i in range(total_settings):
@@ -95,6 +96,7 @@ def main(options):
             continue
         else:
             seen_settings.add(current_setting)
+        ## wyw 这种grid search的方式真牛逼！！不服不行，学习了学习了
 
         model = LMF(input_dims, (ahid, vhid, thid), thid_2, (adr, vdr, tdr, 0.5), output_dim, r)
         if options['cuda']:
@@ -103,7 +105,7 @@ def main(options):
         print("Model initialized")
         criterion = nn.L1Loss(size_average=False)
         factors = list(model.parameters())[:3]
-        other = list(model.parameters())[3:]
+        other = list(model.parameters())[3:]## wyw 这里将参数分为factor 和other的原因？未看懂
         optimizer = optim.Adam([{"params": factors, "lr": factor_lr}, {"params": other, "lr": lr}], weight_decay=decay)
 
         # setup training
@@ -112,8 +114,9 @@ def main(options):
         train_iterator = DataLoader(train_set, batch_size=batch_sz, num_workers=4, shuffle=True)
         valid_iterator = DataLoader(valid_set, batch_size=len(valid_set), num_workers=4, shuffle=True)
         test_iterator = DataLoader(test_set, batch_size=len(test_set), num_workers=4, shuffle=True)
-        curr_patience = patience
+        curr_patience = patience## 容忍
 
+        ##wyw 这里以下才是训练过程，以上为grid search 及模型框架搭建
         for e in range(epochs):
             model.train()
             model.zero_grad()
@@ -129,7 +132,10 @@ def main(options):
                 output = model(x_a, x_v, x_t)
                 loss = criterion(output, y)
                 loss.backward()
-                avg_loss = loss.data[0]
+                print("########################")
+                print(loss.data)
+                print("########################")
+                avg_loss = loss.data.item()## wyw origin:loss.data[0]
                 avg_train_loss += avg_loss / len(train_set)
                 optimizer.step()
 

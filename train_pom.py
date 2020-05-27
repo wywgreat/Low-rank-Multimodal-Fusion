@@ -175,7 +175,7 @@ def main(options):
                 output = model(x_a, x_v, x_t)
                 loss = criterion(output, y)
                 loss.backward()
-                avg_loss = loss.data[0] / float(output_dim)
+                avg_loss = loss.data.item() / float(output_dim) ##wyw  origin:loss.data[0] / float(output_dim)
                 avg_train_loss += avg_loss / len(train_set)
                 optimizer.step()
 
@@ -196,7 +196,7 @@ def main(options):
                 y = Variable(batch[-1].view(-1, output_dim).float().type(DTYPE), requires_grad=False)
                 output = model(x_a, x_v, x_t)
                 valid_loss = criterion(output, y)
-                avg_valid_loss = valid_loss.data[0] / float(output_dim)
+                avg_valid_loss = valid_loss.data.item() / float(output_dim)##wyw origin: valid_loss.data[0] / float(output_dim)
             y = y.cpu().data.numpy().reshape(-1, output_dim)
 
             if np.isnan(avg_valid_loss):
@@ -232,7 +232,7 @@ def main(options):
                 y = Variable(batch[-1].view(-1, output_dim).float().type(DTYPE), requires_grad=False)
                 output_test = best_model(x_a, x_v, x_t)
                 loss_test = criterion(output_test, y)
-                test_loss = loss_test.data[0]
+                test_loss = loss_test.data.item() ##wyw originloss_test.data[0]
                 avg_test_loss = test_loss / float(output_dim)
             output_test = output_test.cpu().data.numpy().reshape(-1, output_dim)
             y = y.cpu().data.numpy().reshape(-1, output_dim)
@@ -240,12 +240,12 @@ def main(options):
             # these are the needed metrics
             mae = np.mean(np.absolute(output_test - y), axis=0)
             mae = [round(a, 3) for a in mae]
-            corr = [round(np.corrcoef(output_test[:, i], y[:, i])[0][1], 3) for i in xrange(y.shape[1])]
-            mult_acc = [round(sum(np.round(output_test[:, i]) == np.round(y[:, i])) / float(len(y)), 3) for i in xrange(y.shape[1])]
+            corr = [round(np.corrcoef(output_test[:, i], y[:, i])[0][1], 3) for i in range(y.shape[1])]##wyw origin xrange
+            mult_acc = [round(sum(np.round(output_test[:, i]) == np.round(y[:, i])) / float(len(y)), 3) for i in range(y.shape[1])]##wyw origin xrange
 
             display(mae, corr, mult_acc)
 
-            results = [ahid, vhid, thid, adr, vdr, tdr, factor_lr, lr, r, batch_sz, decay, min_valid_loss.cpu().data.numpy()]
+            results = [ahid, vhid, thid, adr, vdr, tdr, factor_lr, lr, r, batch_sz, decay, np.array(min_valid_loss)]## wyw origin min_valid_loss.cpu().data.numpy()
 
             results.extend(mult_acc)
             results.extend(mae)
@@ -259,13 +259,13 @@ def main(options):
 if __name__ == "__main__":
     OPTIONS = argparse.ArgumentParser()
     OPTIONS.add_argument('--run_id', dest='run_id', type=int, default=1)
-    OPTIONS.add_argument('--epochs', dest='epochs', type=int, default=500)
+    OPTIONS.add_argument('--epochs', dest='epochs', type=int, default=50)##wyw orgin 500
     OPTIONS.add_argument('--patience', dest='patience', type=int, default=20)
     OPTIONS.add_argument('--output_dim', dest='output_dim', type=int, default=16) # for 16 speaker traits
     OPTIONS.add_argument('--signiture', dest='signiture', type=str, default='')
     OPTIONS.add_argument('--cuda', dest='cuda', type=bool, default=False)
     OPTIONS.add_argument('--data_path', dest='data_path',
-                         type=str, default='directory/to/data/')
+                         type=str, default='./data/')
     OPTIONS.add_argument('--model_path', dest='model_path',
                          type=str, default='models')
     OPTIONS.add_argument('--output_path', dest='output_path',

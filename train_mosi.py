@@ -132,9 +132,9 @@ def main(options):
                 output = model(x_a, x_v, x_t)
                 loss = criterion(output, y)
                 loss.backward()
-                print("########################")
+                print("#########each batch loss###############")
                 print(loss.data)
-                print("########################")
+                print("########################################")
                 avg_loss = loss.data.item()## wyw origin:loss.data[0]
                 avg_train_loss += avg_loss / len(train_set)
                 optimizer.step()
@@ -218,7 +218,7 @@ def main(options):
             output_test = output_test.reshape((len(output_test),))
             y = y.reshape((len(y),))
             mae = np.mean(np.absolute(output_test-y))
-            corr = round(np.corrcoef(output_test,y)[0][1],5)
+            corr = round(np.corrcoef(output_test,y)[0][1],5)##wyw  两个输出向量的output居然也可以作为一种评测方式！！
             multi_acc = round(sum(np.round(output_test)==np.round(y))/float(len(y)),5)
             true_label = (y >= 0)
             predicted_label = (output_test >= 0)
@@ -235,7 +235,7 @@ def main(options):
 if __name__ == "__main__":
     OPTIONS = argparse.ArgumentParser()
     OPTIONS.add_argument('--run_id', dest='run_id', type=int, default=1)
-    OPTIONS.add_argument('--epochs', dest='epochs', type=int, default=500)
+    OPTIONS.add_argument('--epochs', dest='epochs', type=int, default=5)#wyw for demo origin: default=500
     OPTIONS.add_argument('--patience', dest='patience', type=int, default=20)
     OPTIONS.add_argument('--output_dim', dest='output_dim', type=int, default=1)
     OPTIONS.add_argument('--signiture', dest='signiture', type=str, default='mosi')     

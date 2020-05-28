@@ -190,7 +190,7 @@ def load_mosi(data_path):
     input_dims = (audio_dim, visual_dim, text_dim)
 
     # remove possible NaN values
-    train_set.visual[train_set.visual != train_set.visual] = 0
+    train_set.visual[train_set.visual != train_set.visual] = 0##wyw 一种抹去NaN的方式！
     valid_set.visual[valid_set.visual != valid_set.visual] = 0
     test_set.visual[test_set.visual != test_set.visual] = 0
 
